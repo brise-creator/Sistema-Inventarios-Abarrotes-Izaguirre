@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inicio Cajero - Sistema de Gesti&oacute;n</title>
+    <link rel="stylesheet" type="text/css" href="Est.css">
+</head>
+<body class="home-body">
+    <main class="home-container">
+        <header class="home-header">
+            <div class="brand">
+                <img class="home-logo" src="imgs/logoMI.jpg" alt="Logo">
+                <div>
+                    <p class="welcome">Bienvenido al sistema</p>
+                    <h1>Panel de cajero</h1>
+                </div>
+            </div>
+
+            <div class="user-panel">
+                <span class="role-label">Rol actual</span>
+                <strong>Cajero</strong>
+                <br>
+                <button type="button" onclick="window.location.href='Index.html'">Cerrar sesi&oacute;n</button>
+            </div>
+        </header>
+
+        <section class="intro">
+            <h2>M&oacute;dulos permitidos</h2>
+            <p>El cajero puede registrar ventas, consultar informaci&oacute;n y descontar productos solo cuando realiza una venta.</p>
+        </section>
+
+        <section class="module-grid" aria-label="M&oacute;dulos del cajero">
+            <a class="module-card" href="ventas.html">
+                <span class="module-icon">VEN</span>
+                <div>
+                    <h3>Ventas</h3>
+                    <p>Registra ventas, tickets y cobros diarios.</p>
+                    <ul class="permission-list">
+                        <li>Puede vender productos.</li>
+                        <li>Puede disminuir existencias por cada venta.</li>
+                        <li>No puede ver estad&iacute;sticas de productos m&aacute;s vendidos.</li>
+                    </ul>
+                    <span class="access-tag cashier">Cajero: captura</span>
+                </div>
+            </a>
+
+            <a class="module-card" href="inventario.html">
+                <span class="module-icon">INV</span>
+                <div>
+                    <h3>Inventario</h3>
+                    <p>Consulta productos y existencias disponibles.</p>
+                    <ul class="permission-list">
+                        <li>Puede consultar productos.</li>
+                        <li>No puede aumentar existencias.</li>
+                        <li>No puede editar ni eliminar productos.</li>
+                    </ul>
+                    <span class="access-tag read-only">Solo consulta</span>
+                </div>
+            </a>
+
+            <a class="module-card" href="usuarios.html">
+                <span class="module-icon">USR</span>
+                <div>
+                    <h3>Usuarios con cr&eacute;dito</h3>
+                    <p>Consulta qu&eacute; usuarios tienen cr&eacute;dito permitido.</p>
+                    <ul class="permission-list">
+                        <li>Puede ver usuarios autorizados.</li>
+                        <li>No puede crear usuarios.</li>
+                        <li>No puede cambiar permisos de cr&eacute;dito.</li>
+                    </ul>
+                    <span class="access-tag read-only">Solo lectura</span>
+                </div>
+            </a>
+        </section>
+    </main>
+</body>
+</html>

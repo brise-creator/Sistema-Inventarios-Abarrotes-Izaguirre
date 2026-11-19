@@ -1,0 +1,49 @@
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8081:80"
+    environment:
+      DB_HOST: db
+      DB_NAME: sistema_gestion
+      DB_USER: inventarios_user
+      DB_PASSWORD: ${DB_PASSWORD:?Define DB_PASSWORD en tu archivo .env}
+    volumes:
+      - ./app:/var/www/html
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: sistema_gestion
+      MYSQL_USER: inventarios_user
+      MYSQL_PASSWORD: ${DB_PASSWORD:?Define DB_PASSWORD en tu archivo .env}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Define MYSQL_ROOT_PASSWORD en tu archivo .env}
+    volumes:
+      - inventarios_mysql_data:/var/lib/mysql
+      - ./database.sql:/docker-entrypoint-initdb.d/01-sistema_gestion.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", 'mysqladmin ping -h localhost -u root --password="$$MYSQL_ROOT_PASSWORD" --silent']
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+  phpmyadmin:
+    image: phpmyadmin:5.2
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8082:80"
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  inventarios_mysql_data:

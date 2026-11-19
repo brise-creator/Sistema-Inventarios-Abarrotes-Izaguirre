@@ -1,0 +1,37 @@
+INSTRUCCIONES PARA USAR LA BASE DE DATOS
+
+1. Abre XAMPP o WAMP.
+
+2. Activa Apache y MySQL.
+
+3. Copia la carpeta del proyecto a:
+   C:\xampp\htdocs\ProyectoSoftware
+
+4. Abre phpMyAdmin:
+   http://localhost/phpmyadmin
+
+5. En phpMyAdmin entra a la pestaña SQL y ejecuta el contenido de:
+   database.sql
+
+6. Abre el sistema desde el navegador usando localhost:
+   http://localhost/ProyectoSoftware/Index.html
+
+IMPORTANTE:
+No abras los archivos con doble clic, porque así quedan como file:// y PHP no funciona.
+Debe abrirse con http://localhost/...
+
+ARCHIVOS DE CONEXION:
+- db.php: conexión a MySQL.
+- api_productos.php: inventario, entradas, salidas y merma.
+- api_ventas.php: ventas reales y descuento de inventario.
+- api_reportes.php: reportes reales.
+- api_proveedores.php: proveedores reales.
+- api_usuarios.php: usuarios y login reales.
+
+BASE DE DATOS:
+- Nombre: sistema_gestion
+- Usuario MySQL por defecto: root
+- Contraseña por defecto: vacía
+
+Si tu MySQL tiene contraseña, edita db.php y cambia:
+$password = '';

@@ -1,0 +1,17 @@
+# No subir contraseñas ni datos privados
+.env
+.env.*
+!.env.example
+
+# Datos locales y temporales
+*.log
+*.bak
+*.tmp
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# No versionar respaldos reales de base de datos
+backups/
+*.dump

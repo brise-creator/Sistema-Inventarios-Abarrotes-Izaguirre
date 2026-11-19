@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inicio - Sistema de Gesti&oacute;n</title>
+    <link rel="stylesheet" type="text/css" href="Est.css">
+</head>
+<body class="home-body">
+    <main class="home-container">
+        <header class="home-header">
+            <div class="brand">
+                <img class="home-logo" src="imgs/logoMI.jpg" alt="Logo">
+                <div>
+                    <p class="welcome">Bienvenido al sistema</p>
+                    <h1>Panel de inicio</h1>
+                </div>
+            </div>
+
+            <div class="user-panel">
+                <span class="role-label">Rol actual</span>
+                <strong>Administrador</strong>
+                <br>
+                <button type="submit" onclick="window.location.href='Index.html'"> Cerrar sesi&oacute;n</button>
+            </div>
+
+        </header>
+
+        <section class="intro">
+            <h2>M&oacute;dulos principales</h2>
+            <p>Accede a las secciones disponibles seg&uacute;n el rol asignado al usuario.</p>
+        </section>
+
+        <section class="module-grid" aria-label="M&oacute;dulos del sistema">
+            <a class="module-card" href="inventario.html">
+                <span class="module-icon">INV</span>
+                <div>
+                    <h3>Inventario</h3>
+                    <p>Consulta existencias, productos y movimientos.</p>
+                    <span class="access-tag">Administrador</span>
+                </div>
+            </a>
+
+            <a class="module-card" href="ventas.html">
+                <span class="module-icon">VEN</span>
+                <div>
+                    <h3>Ventas</h3>
+                    <p>Registra ventas, tickets y cobros diarios.</p>
+                    <span class="access-tag cashier">Administrador / Cajero</span>
+                </div>
+            </a>
+
+            <a class="module-card" href="proveedores.html">
+                <span class="module-icon">PRO</span>
+                <div>
+                    <h3>Proveedores</h3>
+                    <p>Administra datos de proveedores y compras.</p>
+                    <span class="access-tag">Administrador</span>
+                </div>
+            </a>
+
+            <a class="module-card" href="reportes.html">
+                <span class="module-icon">REP</span>
+                <div>
+                    <h3>Reportes</h3>
+                    <p>Revisa ventas, inventario y actividad del sistema.</p>
+                    <span class="access-tag">Administrador</span>
+                </div>
+            </a>
+
+            <a class="module-card" href="usuarios.html">
+                <span class="module-icon">USR</span>
+                <div>
+                    <h3>Usuarios</h3>
+                    <p>Gestiona cuentas, permisos y roles de acceso.</p>
+                    <span class="access-tag">Administrador</span>
+                </div>
+            </a>
+        </section>
+    </main>
+</body>
+</html>

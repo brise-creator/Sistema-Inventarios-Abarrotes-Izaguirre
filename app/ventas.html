@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ventas - Sistema de Gesti&oacute;n</title>
+    <link rel="stylesheet" type="text/css" href="Est.css">
+</head>
+
+<body class="home-body">
+    <main class="home-container">
+        <header class="home-header">
+            <div class="brand">
+                <img class="home-logo" src="imgs/logoMI.jpg" alt="Logo">
+                <div>
+                    <p class="welcome">M&oacute;dulo del sistema</p>
+                    <h1>Ventas</h1>
+                </div>
+            </div>
+
+            <div class="user-panel">
+                <span class="role-label">Rol actual</span>
+                <strong>Administrador / Cajero</strong>
+                <br><br>
+                <button type="button" onclick="history.back()">Volver al inicio</button>
+            </div>
+        </header>
+
+        <section class="inventory-hero">
+            <div>
+                <p class="welcome">Punto de venta</p>
+                <h2>Ventas reales desde MySQL</h2>
+                <p>Al registrar una venta se descuenta el producto del inventario y se guarda el movimiento.</p>
+            </div>
+
+            <div class="summary-grid" aria-label="Resumen de ventas">
+                <article class="summary-card">
+                    <span>Ventas</span>
+                    <strong id="total-sales">0</strong>
+                </article>
+                <article class="summary-card">
+                    <span>Productos vendidos</span>
+                    <strong id="sold-units">0</strong>
+                </article>
+                <article class="summary-card alert">
+                    <span>Ingresos</span>
+                    <strong id="sales-income">$0.00</strong>
+                </article>
+            </div>
+        </section>
+
+        <section class="inventory-section">
+            <h2>Registrar venta</h2>
+            <form id="sale-form" class="admin-form sale-form">
+                <div class="form-field">
+                    <label for="sale-product">Producto</label>
+                    <select id="sale-product" required></select>
+                </div>
+                <div class="form-field">
+                    <label for="sale-quantity">Cantidad</label>
+                    <input type="number" id="sale-quantity" min="1" value="1" required>
+                </div>
+                <div class="form-field">
+                    <label for="sale-payment">Pago</label>
+                    <select id="sale-payment" required>
+                        <option value="Efectivo">Efectivo</option>
+                        <option value="Tarjeta">Tarjeta</option>
+                        <option value="Transferencia">Transferencia</option>
+                    </select>
+                </div>
+                <div class="form-field">
+                    <label>Total</label>
+                    <input type="text" id="sale-total" value="$0.00" readonly>
+                </div>
+                <button type="submit">Registrar venta</button>
+            </form>
+        </section>
+
+        <section class="inventory-section">
+            <h2>Productos m&aacute;s vendidos</h2>
+            <div id="top-products-chart" class="sales-chart"></div>
+        </section>
+
+        <section class="inventory-section">
+            <h2>Ventas realizadas</h2>
+            <table class="inventory-table">
+                <thead>
+                    <tr>
+                        <th>Ticket</th>
+                        <th>Producto</th>
+                        <th>Cantidad</th>
+                        <th>Total</th>
+                        <th>Fecha</th>
+                    </tr>
+                </thead>
+                <tbody id="sales-body"></tbody>
+            </table>
+        </section>
+    </main>
+
+    <script>
+        const saleForm = document.getElementById('sale-form');
+        const saleProduct = document.getElementById('sale-product');
+        const saleQuantity = document.getElementById('sale-quantity');
+        const saleTotal = document.getElementById('sale-total');
+        const salesBody = document.getElementById('sales-body');
+        const topProductsChart = document.getElementById('top-products-chart');
+        const totalSales = document.getElementById('total-sales');
+        const soldUnits = document.getElementById('sold-units');
+        const salesIncome = document.getElementById('sales-income');
+        const API_BASE = ''; // Misma dirección y puerto del servidor PHP
+        let products = [];
+
+        function money(amount) {
+            return '$' + Number(amount).toFixed(2);
+        }
+
+        async function loadProducts() {
+            const response = await fetch(API_BASE + 'api_productos.php?action=list');
+            const data = await response.json();
+            products = data.productos || [];
+            saleProduct.innerHTML = '';
+
+            if (!products.length) {
+                saleProduct.innerHTML = '<option value="">No hay productos registrados</option>';
+                updateTotal();
+                return;
+            }
+
+            products.forEach(function(product) {
+                const option = document.createElement('option');
+                option.value = product.id;
+                option.disabled = Number(product.existencias) <= 0;
+                option.textContent = `${product.nombre} - ${money(product.precio)} - Stock: ${product.existencias}`;
+                saleProduct.appendChild(option);
+            });
+
+            updateTotal();
+        }
+
+        async function loadSales() {
+            const response = await fetch(API_BASE + 'api_ventas.php?action=list');
+            const data = await response.json();
+            const sales = data.ventas || [];
+            salesBody.innerHTML = '';
+
+            if (!sales.length) {
+                salesBody.innerHTML = '<tr><td colspan="5">No hay ventas registradas.</td></tr>';
+            }
+
+            sales.forEach(function(sale) {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${sale.ticket}</td>
+                    <td>${sale.producto_nombre}</td>
+                    <td>${sale.cantidad}</td>
+                    <td>${money(sale.total)}</td>
+                    <td>${sale.fecha}</td>
+                `;
+                salesBody.appendChild(row);
+            });
+
+            renderSummary(sales);
+            renderTopProducts(sales);
+        }
+
+        function updateTotal() {
+            const product = products.find(item => String(item.id) === saleProduct.value);
+            const quantity = Math.max(1, Number(saleQuantity.value));
+            saleTotal.value = product ? money(Number(product.precio) * quantity) : '$0.00';
+        }
+
+        function renderSummary(sales) {
+            const units = sales.reduce((total, sale) => total + Number(sale.cantidad), 0);
+            const income = sales.reduce((total, sale) => total + Number(sale.total), 0);
+            totalSales.textContent = sales.length;
+            soldUnits.textContent = units;
+            salesIncome.textContent = money(income);
+        }
+
+        function renderTopProducts(sales) {
+            const totals = {};
+            topProductsChart.innerHTML = '';
+
+            sales.forEach(function(sale) {
+                totals[sale.producto_nombre] = (totals[sale.producto_nombre] || 0) + Number(sale.cantidad);
+            });
+
+            const entries = Object.entries(totals).sort((a, b) => b[1] - a[1]).slice(0, 5);
+
+            if (!entries.length) {
+                topProductsChart.innerHTML = '<p class="empty-state">A&uacute;n no hay ventas registradas.</p>';
+                return;
+            }
+
+            const max = entries[0][1];
+            entries.forEach(function(item) {
+                const row = document.createElement('div');
+                const percent = Math.max(8, (item[1] / max) * 100);
+                row.className = 'chart-row';
+                row.innerHTML = `
+                    <span>${item[0]}</span>
+                    <div class="chart-track"><div class="chart-bar" style="width: ${percent}%"></div></div>
+                    <strong>${item[1]}</strong>
+                `;
+                topProductsChart.appendChild(row);
+            });
+        }
+
+        saleProduct.addEventListener('change', updateTotal);
+        saleQuantity.addEventListener('input', updateTotal);
+
+        saleForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const response = await fetch(API_BASE + 'api_ventas.php?action=create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    producto_id: saleProduct.value,
+                    cantidad: Number(saleQuantity.value),
+                    metodo_pago: document.getElementById('sale-payment').value
+                })
+            });
+            const data = await response.json();
+
+            if (!data.ok) {
+                alert(data.error || 'No se pudo registrar la venta.');
+                return;
+            }
+
+            saleForm.reset();
+            saleQuantity.value = 1;
+            await loadProducts();
+            await loadSales();
+        });
+
+        loadProducts();
+        loadSales();
+    </script>
+</body>
+</html>

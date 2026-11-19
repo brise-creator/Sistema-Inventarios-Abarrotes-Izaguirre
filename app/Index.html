@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formulario de Registro</title>
+    <link rel="stylesheet" type="text/css" href="Est.css">
+</head>
+<body>
+    <div class="form-container">
+        <img class="logo" src="imgs/logoMI.jpg" alt="Logo">
+        <h2>Formulario de Registro</h2>
+        <form>
+            <label for="username">Usuario</label>
+            <input type="text" id="username" name="username" placeholder="Ingresa tu usuario" required>
+
+            <label for="password">Contrase&ntilde;a</label>
+            <input type="password" id="password" name="password" placeholder="Ingresa tu contrase&ntilde;a" required>
+
+            <button type="submit">Iniciar Sesi&oacute;n</button>
+        </form>
+    </div>
+
+    <script>
+        const API_BASE = ''; // Misma dirección y puerto del servidor PHP
+
+        document.querySelector('form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+
+            try {
+                const response = await fetch(API_BASE + 'api_usuarios.php?action=login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ usuario: username, password: password })
+                });
+                const data = await response.json();
+
+                if (!data.ok) {
+                    alert(data.error || 'Usuario o contrase\u00f1a incorrectos.');
+                    return;
+                }
+
+                if (data.usuario.rol === 'Administrador') {
+                    window.location.href = 'InicioA.html';
+                } else if (data.usuario.rol === 'Cajero') {
+                    window.location.href = 'InicioC.html';
+                }
+            } catch (error) {
+                alert('No se pudo conectar con el servidor. Verifica Docker con: docker compose ps y docker compose logs app db.');
+            }
+        });
+    </script>
+</body>
+</html>

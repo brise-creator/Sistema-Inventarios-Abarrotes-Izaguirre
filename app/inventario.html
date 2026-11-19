@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventario - Sistema de Gesti&oacute;n</title>
+    <link rel="stylesheet" type="text/css" href="Est.css">
+</head>
+
+<body class="home-body">
+    <main class="home-container">
+        <header class="home-header">
+            <div class="brand">
+                <img class="home-logo" src="imgs/logoMI.jpg" alt="Logo">
+                <div>
+                    <p class="welcome">M&oacute;dulo del sistema</p>
+                    <h1>Inventario</h1>
+                </div>
+            </div>
+
+            <div class="user-panel">
+                <span class="role-label">Rol actual</span>
+                <strong>Administrador</strong>
+                <br><br>
+                <button type="button" onclick="window.location.href='InicioA.html'">Volver al inicio</button>
+            </div>
+        </header>
+
+        <section class="inventory-hero">
+            <div>
+                <p class="welcome">Control de inventario</p>
+                <h2>Datos reales desde MySQL</h2>
+                <p>Registra productos, precio, existencias, entradas, salidas y merma. Todo se guarda en la base de datos.</p>
+            </div>
+
+            <div class="summary-grid" aria-label="Resumen del inventario">
+                <article class="summary-card">
+                    <span>Total productos</span>
+                    <strong id="total-products">0</strong>
+                </article>
+                <article class="summary-card">
+                    <span>Existencias</span>
+                    <strong id="total-stock">0</strong>
+                </article>
+                <article class="summary-card alert">
+                    <span>Revisar</span>
+                    <strong id="total-alerts">0</strong>
+                </article>
+            </div>
+        </section>
+
+        <section class="inventory-section">
+            <div class="section-heading">
+                <div>
+                    <p class="welcome">Nuevo producto</p>
+                    <h2>Registrar producto</h2>
+                </div>
+            </div>
+
+            <form id="product-form" class="admin-form product-form">
+                <div class="form-field">
+                    <label for="product-name">Producto</label>
+                    <input type="text" id="product-name" placeholder="Ej. Az&uacute;car 1kg" required>
+                </div>
+                <div class="form-field">
+                    <label for="product-category">Categor&iacute;a</label>
+                    <input type="text" id="product-category" placeholder="Ej. Abarrotes" required>
+                </div>
+                <div class="form-field">
+                    <label for="product-price">Precio</label>
+                    <input type="number" id="product-price" min="0" step="0.01" value="0" required>
+                </div>
+                <div class="form-field">
+                    <label for="product-stock">Existencias iniciales</label>
+                    <input type="number" id="product-stock" min="0" value="0" required>
+                </div>
+                <button type="submit">Registrar producto</button>
+            </form>
+        </section>
+
+        <section class="inventory-section">
+            <h2>Productos registrados</h2>
+            <table class="inventory-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Producto</th>
+                        <th>Categor&iacute;a</th>
+                        <th>Precio</th>
+                        <th>Existencias</th>
+                        <th>Estado</th>
+                        <th>Ajustar / Merma</th>
+                    </tr>
+                </thead>
+                <tbody id="products-body"></tbody>
+            </table>
+        </section>
+
+        <section class="inventory-section">
+            <h2>Movimientos recientes</h2>
+            <table class="inventory-table">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Producto</th>
+                        <th>Movimiento</th>
+                        <th>Cantidad</th>
+                    </tr>
+                </thead>
+                <tbody id="movements-body"></tbody>
+            </table>
+        </section>
+    </main>
+
+    <script>
+        const productForm = document.getElementById('product-form');
+        const productsBody = document.getElementById('products-body');
+        const movementsBody = document.getElementById('movements-body');
+        const totalProducts = document.getElementById('total-products');
+        const totalStock = document.getElementById('total-stock');
+        const totalAlerts = document.getElementById('total-alerts');
+        const API_BASE = ''; // Misma dirección y puerto del servidor PHP
+
+        function getStatus(stock) {
+            if (stock <= 0) return { text: 'Agotado', className: 'empty' };
+            if (stock <= 10) return { text: 'Bajo stock', className: 'low' };
+            return { text: 'Disponible', className: 'available' };
+        }
+
+        function updateSummary(products) {
+            totalProducts.textContent = products.length;
+            totalStock.textContent = products.reduce((total, product) => total + Number(product.existencias), 0);
+            totalAlerts.textContent = products.filter(product => Number(product.existencias) <= 10).length;
+        }
+
+        async function loadProducts() {
+            const response = await fetch(API_BASE + 'api_productos.php?action=list');
+            const data = await response.json();
+            const products = data.productos || [];
+
+            productsBody.innerHTML = '';
+
+            if (!products.length) {
+                productsBody.innerHTML = '<tr><td colspan="7">No hay productos registrados.</td></tr>';
+                updateSummary([]);
+                return;
+            }
+
+            products.forEach(function(product) {
+                const status = getStatus(Number(product.existencias));
+                const row = document.createElement('tr');
+
+                row.innerHTML = `
+                    <td>${product.id}</td>
+                    <td>${product.nombre}</td>
+                    <td>${product.categoria}</td>
+                    <td>$${Number(product.precio).toFixed(2)}</td>
+                    <td class="stock-value">${product.existencias}</td>
+                    <td><span class="stock-status ${status.className}">${status.text}</span></td>
+                    <td>
+                        <div class="stock-actions">
+                            <button type="button" class="action-button decrease" data-id="${product.id}">-</button>
+                            <input type="number" class="stock-input" min="1" value="1">
+                            <button type="button" class="action-button increase" data-id="${product.id}">+</button>
+                            <button type="button" class="action-button waste" data-id="${product.id}" title="Registrar merma">M</button>
+                        </div>
+                    </td>
+                `;
+
+                productsBody.appendChild(row);
+            });
+
+            updateSummary(products);
+        }
+
+        async function loadMovements() {
+            const response = await fetch(API_BASE + 'api_productos.php?action=movements');
+            const data = await response.json();
+            const movements = data.movimientos || [];
+
+            movementsBody.innerHTML = '';
+
+            if (!movements.length) {
+                movementsBody.innerHTML = '<tr><td colspan="4">Sin movimientos registrados.</td></tr>';
+                return;
+            }
+
+            movements.forEach(function(movement) {
+                const sign = movement.tipo === 'Entrada' || movement.tipo === 'Registro' ? '+' : '-';
+                const row = document.createElement('tr');
+
+                row.innerHTML = `
+                    <td>${movement.fecha}</td>
+                    <td>${movement.producto_nombre}</td>
+                    <td>${movement.tipo}</td>
+                    <td>${sign}${movement.cantidad}</td>
+                `;
+
+                movementsBody.appendChild(row);
+            });
+        }
+
+        async function saveMovement(productId, type, quantity) {
+            const response = await fetch(API_BASE + 'api_productos.php?action=movement', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    producto_id: productId,
+                    tipo: type,
+                    cantidad: quantity
+                })
+            });
+            const data = await response.json();
+
+            if (!data.ok) {
+                alert(data.error || 'No se pudo registrar el movimiento.');
+                return;
+            }
+
+            await loadProducts();
+            await loadMovements();
+        }
+
+        productsBody.addEventListener('click', function(e) {
+            if (!e.target.classList.contains('action-button')) return;
+
+            const actions = e.target.closest('.stock-actions');
+            const quantity = Math.max(1, Number(actions.querySelector('.stock-input').value));
+            const productId = e.target.dataset.id;
+            let type = 'Salida';
+
+            if (e.target.classList.contains('increase')) type = 'Entrada';
+            if (e.target.classList.contains('waste')) type = 'Merma';
+
+            saveMovement(productId, type, quantity);
+        });
+
+        productForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const response = await fetch(API_BASE + 'api_productos.php?action=create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    nombre: document.getElementById('product-name').value.trim(),
+                    categoria: document.getElementById('product-category').value.trim(),
+                    precio: Number(document.getElementById('product-price').value),
+                    existencias: Number(document.getElementById('product-stock').value)
+                })
+            });
+            const data = await response.json();
+
+            if (!data.ok) {
+                alert(data.error || 'No se pudo registrar el producto.');
+                return;
+            }
+
+            productForm.reset();
+            document.getElementById('product-price').value = 0;
+            document.getElementById('product-stock').value = 0;
+            await loadProducts();
+            await loadMovements();
+        });
+
+        loadProducts();
+        loadMovements();
+    </script>
+</body>
+</html>

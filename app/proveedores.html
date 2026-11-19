@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proveedores - Sistema de Gesti&oacute;n</title>
+    <link rel="stylesheet" type="text/css" href="Est.css">
+</head>
+
+<body class="home-body">
+    <main class="home-container">
+        <header class="home-header">
+            <div class="brand">
+                <img class="home-logo" src="imgs/logoMI.jpg" alt="Logo">
+                <div>
+                    <p class="welcome">M&oacute;dulo del sistema</p>
+                    <h1>Proveedores</h1>
+                </div>
+            </div>
+
+            <div class="user-panel">
+                <span class="role-label">Rol actual</span>
+                <strong>Administrador</strong>
+                <br><br>
+                <button type="button" onclick="window.location.href='InicioA.html'">Volver al inicio</button>
+            </div>
+        </header>
+
+        <section class="intro">
+            <h2>Administraci&oacute;n de proveedores</h2>
+            <p>Registra proveedores reales y consulta compras guardadas en la base de datos.</p>
+        </section>
+
+        <section class="inventory-section">
+            <h2>Registrar proveedor</h2>
+            <form id="provider-form" class="admin-form product-form">
+                <div class="form-field">
+                    <label for="provider-name">Proveedor</label>
+                    <input type="text" id="provider-name" required>
+                </div>
+                <div class="form-field">
+                    <label for="provider-phone">Tel&eacute;fono</label>
+                    <input type="text" id="provider-phone" required>
+                </div>
+                <div class="form-field">
+                    <label for="provider-email">Correo</label>
+                    <input type="text" id="provider-email" required>
+                </div>
+                <div class="form-field">
+                    <label for="provider-status">Estado</label>
+                    <select id="provider-status">
+                        <option value="Activo">Activo</option>
+                        <option value="Inactivo">Inactivo</option>
+                    </select>
+                </div>
+                <button type="submit">Registrar proveedor</button>
+            </form>
+        </section>
+
+        <section class="inventory-section">
+            <h2>Proveedores registrados</h2>
+            <table class="inventory-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Proveedor</th>
+                        <th>Tel&eacute;fono</th>
+                        <th>Correo</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody id="providers-body"></tbody>
+            </table>
+        </section>
+
+        <section class="inventory-section">
+            <h2>Compras recientes</h2>
+            <table class="inventory-table">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Proveedor</th>
+                        <th>Producto</th>
+                        <th>Cantidad</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody id="purchases-body"></tbody>
+            </table>
+        </section>
+    </main>
+
+    <script>
+        const providerForm = document.getElementById('provider-form');
+        const providersBody = document.getElementById('providers-body');
+        const purchasesBody = document.getElementById('purchases-body');
+        const API_BASE = ''; // Misma dirección y puerto del servidor PHP
+
+        function money(amount) {
+            return '$' + Number(amount).toFixed(2);
+        }
+
+        async function loadProviders() {
+            const response = await fetch(API_BASE + 'api_proveedores.php?action=list');
+            const data = await response.json();
+            const providers = data.proveedores || [];
+            const purchases = data.compras || [];
+
+            providersBody.innerHTML = '';
+            purchasesBody.innerHTML = '';
+
+            if (!providers.length) {
+                providersBody.innerHTML = '<tr><td colspan="5">No hay proveedores registrados.</td></tr>';
+            }
+
+            providers.forEach(function(provider) {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>PR-${String(provider.id).padStart(3, '0')}</td>
+                    <td>${provider.nombre}</td>
+                    <td>${provider.telefono}</td>
+                    <td>${provider.correo}</td>
+                    <td>${provider.estado}</td>
+                `;
+                providersBody.appendChild(row);
+            });
+
+            if (!purchases.length) {
+                purchasesBody.innerHTML = '<tr><td colspan="5">No hay compras registradas.</td></tr>';
+            }
+
+            purchases.forEach(function(purchase) {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${purchase.fecha}</td>
+                    <td>${purchase.proveedor}</td>
+                    <td>${purchase.producto}</td>
+                    <td>${purchase.cantidad}</td>
+                    <td>${money(purchase.total)}</td>
+                `;
+                purchasesBody.appendChild(row);
+            });
+        }
+
+        providerForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const response = await fetch(API_BASE + 'api_proveedores.php?action=create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    nombre: document.getElementById('provider-name').value.trim(),
+                    telefono: document.getElementById('provider-phone').value.trim(),
+                    correo: document.getElementById('provider-email').value.trim(),
+                    estado: document.getElementById('provider-status').value
+                })
+            });
+            const data = await response.json();
+
+            if (!data.ok) {
+                alert(data.error || 'No se pudo registrar el proveedor.');
+                return;
+            }
+
+            providerForm.reset();
+            loadProviders();
+        });
+
+        loadProviders();
+    </script>
+</body>
+</html>

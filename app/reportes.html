@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reportes - Sistema de Gesti&oacute;n</title>
+    <link rel="stylesheet" type="text/css" href="Est.css">
+</head>
+
+<body class="home-body">
+    <main class="home-container">
+        <header class="home-header">
+            <div class="brand">
+                <img class="home-logo" src="imgs/logoMI.jpg" alt="Logo">
+                <div>
+                    <p class="welcome">M&oacute;dulo del sistema</p>
+                    <h1>Reportes</h1>
+                </div>
+            </div>
+
+            <div class="user-panel">
+                <span class="role-label">Rol actual</span>
+                <strong>Administrador</strong>
+                <br><br>
+                <button type="button" onclick="window.location.href='InicioA.html'">Volver al inicio</button>
+            </div>
+        </header>
+
+        <section class="intro">
+            <h2>Reportes reales del sistema</h2>
+            <p>Esta informaci&oacute;n se calcula desde la base de datos: ventas, inventario y movimientos.</p>
+        </section>
+
+        <section class="inventory-section">
+            <h2>Reporte de ventas</h2>
+            <table class="inventory-table">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Total ventas</th>
+                        <th>Productos vendidos</th>
+                        <th>Ingresos</th>
+                    </tr>
+                </thead>
+                <tbody id="sales-report-body"></tbody>
+            </table>
+        </section>
+
+        <section class="inventory-section">
+            <h2>Productos m&aacute;s vendidos</h2>
+            <div id="top-products-chart" class="sales-chart"></div>
+        </section>
+
+        <section class="inventory-section">
+            <h2>Reporte de inventario</h2>
+            <table class="inventory-table">
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th>Existencias</th>
+                        <th>Estado</th>
+                        <th>&Uacute;ltimo movimiento</th>
+                    </tr>
+                </thead>
+                <tbody id="inventory-report-body"></tbody>
+            </table>
+        </section>
+
+        <section class="inventory-section">
+            <h2>Actividad del sistema</h2>
+            <table class="inventory-table">
+                <thead>
+                    <tr>
+                        <th>Usuario</th>
+                        <th>Acci&oacute;n realizada</th>
+                        <th>Fecha</th>
+                        <th>Hora</th>
+                    </tr>
+                </thead>
+                <tbody id="activity-report-body"></tbody>
+            </table>
+        </section>
+    </main>
+
+    <script>
+        const salesReportBody = document.getElementById('sales-report-body');
+        const inventoryReportBody = document.getElementById('inventory-report-body');
+        const activityReportBody = document.getElementById('activity-report-body');
+        const topProductsChart = document.getElementById('top-products-chart');
+        const API_BASE = ''; // Misma dirección y puerto del servidor PHP
+
+        function money(amount) {
+            return '$' + Number(amount).toFixed(2);
+        }
+
+        function fillEmpty(tbody, columns, text) {
+            tbody.innerHTML = `<tr><td colspan="${columns}">${text}</td></tr>`;
+        }
+
+        function renderChart(items) {
+            topProductsChart.innerHTML = '';
+
+            if (!items.length) {
+                topProductsChart.innerHTML = '<p class="empty-state">A&uacute;n no hay ventas registradas.</p>';
+                return;
+            }
+
+            const max = Number(items[0].total);
+
+            items.forEach(function(item) {
+                const percent = Math.max(8, (Number(item.total) / max) * 100);
+                const row = document.createElement('div');
+                row.className = 'chart-row';
+                row.innerHTML = `
+                    <span>${item.producto_nombre}</span>
+                    <div class="chart-track"><div class="chart-bar" style="width: ${percent}%"></div></div>
+                    <strong>${item.total}</strong>
+                `;
+                topProductsChart.appendChild(row);
+            });
+        }
+
+        async function loadReports() {
+            const response = await fetch(API_BASE + 'api_reportes.php');
+            const data = await response.json();
+
+            const ventas = data.ventas || [];
+            salesReportBody.innerHTML = '';
+
+            if (!ventas.length) {
+                fillEmpty(salesReportBody, 4, 'No hay ventas registradas.');
+            } else {
+                ventas.forEach(function(item) {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${item.fecha}</td>
+                        <td>${item.total_ventas}</td>
+                        <td>${item.productos_vendidos}</td>
+                        <td>${money(item.ingresos)}</td>
+                    `;
+                    salesReportBody.appendChild(row);
+                });
+            }
+
+            const inventario = data.inventario || [];
+            inventoryReportBody.innerHTML = '';
+
+            if (!inventario.length) {
+                fillEmpty(inventoryReportBody, 4, 'No hay productos registrados.');
+            } else {
+                inventario.forEach(function(item) {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${item.nombre}</td>
+                        <td>${item.existencias}</td>
+                        <td>${item.estado}</td>
+                        <td>${item.ultimo_movimiento}</td>
+                    `;
+                    inventoryReportBody.appendChild(row);
+                });
+            }
+
+            const actividad = data.actividad || [];
+            activityReportBody.innerHTML = '';
+
+            if (!actividad.length) {
+                fillEmpty(activityReportBody, 4, 'No hay movimientos registrados.');
+            } else {
+                actividad.forEach(function(item) {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${item.usuario}</td>
+                        <td>${item.accion}</td>
+                        <td>${item.fecha}</td>
+                        <td>${item.hora}</td>
+                    `;
+                    activityReportBody.appendChild(row);
+                });
+            }
+
+            renderChart(data.mas_vendidos || []);
+        }
+
+        loadReports();
+    </script>
+</body>
+</html>

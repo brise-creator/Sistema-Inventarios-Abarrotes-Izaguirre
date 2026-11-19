@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Usuarios - Sistema de Gesti&oacute;n</title>
+    <link rel="stylesheet" type="text/css" href="Est.css">
+</head>
+
+<body class="home-body">
+    <main class="home-container">
+        <header class="home-header">
+            <div class="brand">
+                <img class="home-logo" src="imgs/logoMI.jpg" alt="Logo">
+
+                <div>
+                    <p class="welcome">M&oacute;dulo del sistema</p>
+                    <h1>Usuarios</h1>
+                </div>
+            </div>
+
+            <div class="user-panel">
+                <span class="role-label">Rol actual</span>
+                <strong>Administrador</strong>
+                <br><br>
+
+                <button type="button" onclick="window.location.href='InicioA.html'">
+                    Volver al inicio
+                </button>
+            </div>
+        </header>
+
+        <section class="inventory-hero">
+            <div>
+                <p class="welcome">Gesti&oacute;n de usuarios</p>
+                <h2>Registra cuentas para el sistema</h2>
+                <p>
+                    El administrador puede crear usuarios nuevos, asignarles rol y
+                    activar su acceso para entrar desde la pantalla de inicio de sesi&oacute;n.
+                </p>
+            </div>
+
+            <div class="summary-grid" aria-label="Resumen de usuarios">
+                <article class="summary-card">
+                    <span>Usuarios</span>
+                    <strong id="total-users">2</strong>
+                </article>
+
+                <article class="summary-card">
+                    <span>Administradores</span>
+                    <strong id="total-admins">1</strong>
+                </article>
+
+                <article class="summary-card alert">
+                    <span>Cajeros</span>
+                    <strong id="total-cashiers">1</strong>
+                </article>
+            </div>
+        </section>
+
+        <section class="inventory-section">
+            <div class="section-heading">
+                <div>
+                    <p class="welcome">Nuevo acceso</p>
+                    <h2>Registrar usuario</h2>
+                </div>
+            </div>
+
+            <form id="user-form" class="admin-form">
+                <div class="form-field">
+                    <label for="full-name">Nombre completo</label>
+                    <input type="text" id="full-name" placeholder="Ej. Ana Torres" required>
+                </div>
+
+                <div class="form-field">
+                    <label for="new-username">Usuario</label>
+                    <input type="text" id="new-username" placeholder="Ej. atorres" required>
+                </div>
+
+                <div class="form-field">
+                    <label for="new-password">Contrase&ntilde;a</label>
+                    <input type="password" id="new-password" placeholder="M&iacute;nimo 4 caracteres" minlength="4" required>
+                </div>
+
+                <div class="form-field">
+                    <label for="new-role">Rol</label>
+                    <select id="new-role" required>
+                        <option value="Administrador">Administrador</option>
+                        <option value="Cajero">Cajero</option>
+                    </select>
+                </div>
+
+                <button type="submit">Registrar usuario</button>
+            </form>
+        </section>
+
+        <section class="inventory-section">
+            <h2>Usuarios registrados</h2>
+
+            <table class="inventory-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nombre</th>
+                        <th>Usuario</th>
+                        <th>Rol</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+
+                <tbody id="users-body"></tbody>
+            </table>
+        </section>
+
+        <section class="inventory-section">
+            <h2>Actividad reciente</h2>
+
+            <table class="inventory-table">
+                <thead>
+                    <tr>
+                        <th>Usuario</th>
+                        <th>Acci&oacute;n realizada</th>
+                        <th>Fecha</th>
+                        <th>Hora</th>
+                    </tr>
+                </thead>
+
+                <tbody id="activity-body">
+                    <tr>
+                        <td>Admin</td>
+                        <td>Inicio de sesi&oacute;n</td>
+                        <td>07/05/2026</td>
+                        <td>10:15 AM</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+    </main>
+
+    <script>
+        const form = document.getElementById('user-form');
+        const usersBody = document.getElementById('users-body');
+        const activityBody = document.getElementById('activity-body');
+        const totalUsers = document.getElementById('total-users');
+        const totalAdmins = document.getElementById('total-admins');
+        const totalCashiers = document.getElementById('total-cashiers');
+        const API_BASE = ''; // Misma dirección y puerto del servidor PHP
+
+        async function loadUsers() {
+            try {
+                const response = await fetch(API_BASE + 'api_usuarios.php?action=list');
+                const data = await response.json();
+                const users = data.usuarios || [];
+
+                usersBody.innerHTML = '';
+
+                if (!users.length) {
+                    usersBody.innerHTML = '<tr><td colspan="5">No hay usuarios registrados.</td></tr>';
+                }
+
+                users.forEach(function(user) {
+                    const row = document.createElement('tr');
+
+                    row.innerHTML = `
+                        <td>USR-${String(user.id).padStart(3, '0')}</td>
+                        <td>${user.nombre}</td>
+                        <td>${user.usuario}</td>
+                        <td>${user.rol}</td>
+                        <td><span class="stock-status available">${user.estado}</span></td>
+                    `;
+
+                    usersBody.appendChild(row);
+                });
+
+                totalUsers.textContent = users.length;
+                totalAdmins.textContent = users.filter(user => user.rol === 'Administrador').length;
+                totalCashiers.textContent = users.filter(user => user.rol === 'Cajero').length;
+            } catch (error) {
+                usersBody.innerHTML = '<tr><td colspan="5">No se pudo conectar con la base de datos.</td></tr>';
+            }
+        }
+
+        function addActivity(username) {
+            const now = new Date();
+            const row = document.createElement('tr');
+
+            row.innerHTML = `
+                <td>${username}</td>
+                <td>Creaci&oacute;n de usuario</td>
+                <td>${now.toLocaleDateString('es-MX')}</td>
+                <td>${now.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}</td>
+            `;
+
+            activityBody.prepend(row);
+        }
+
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const name = document.getElementById('full-name').value.trim();
+            const username = document.getElementById('new-username').value.trim();
+            const password = document.getElementById('new-password').value.trim();
+            const role = document.getElementById('new-role').value;
+
+            try {
+                const response = await fetch(API_BASE + 'api_usuarios.php?action=create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        nombre: name,
+                        usuario: username,
+                        password: password,
+                        rol: role
+                    })
+                });
+                const data = await response.json();
+
+                if (!data.ok) {
+                    alert(data.error || 'No se pudo registrar el usuario.');
+                    return;
+                }
+
+                await loadUsers();
+                addActivity(username);
+                form.reset();
+            } catch (error) {
+                alert('No se pudo conectar con la base de datos.');
+            }
+        });
+
+        loadUsers();
+    </script>
+</body>
+</html>
